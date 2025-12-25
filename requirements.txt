@@ -1,0 +1,6 @@
+duckdb
+pandas
+numpy
+tqdm
+scikit-learn
+python-dateutil
