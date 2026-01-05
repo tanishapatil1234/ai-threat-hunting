@@ -5,10 +5,35 @@ An AI-powered system that translates threat hunting hypotheses into executable q
 ## Overview
 
 This project implements a complete pipeline for:
-1. **Query Generation**: Translates natural language threat hunting hypotheses into executable pandas DataFrame queries
+1. **Query Generation**: Parses natural language threat hunting hypotheses , turning them into executable pandas DataFrame queries
+
+Example hypothesis :  CloudTrail logs contain failed console login attempts that could indicate brute force or bot attacks
+
+Example HypothesisIntent Object : 
+
+<code>
+HypothesisIntent(
+    event_name="ConsoleLogin",
+    event_source="signin.amazonaws.com",
+    error_code="FailedAuthentication",
+    user_identity_type=None,
+    filters={
+        "has_error": True,
+        "multiple_attempts": True
+    },
+    time_range=None,
+    description="CloudTrail logs contain failed console login attempts that could indicate brute force or bot attacks"
+)
+</code>
+
+  
 2. **Query Execution**: Runs queries against CloudTrail log data
 3. **Evaluation**: Compares results against expected outcomes using precision, recall, F1 score, and accuracy metrics
 4. **Explainability**: Provides detailed explanations of how hypotheses were interpreted and why queries were structured the way they were
+
+Example: 
+=== Query Reasoning ===
+This hypothesis is asking for: CloudTrail logs contain failed console login attempts that could indicate brute force or bot attacks. I structured the query to filter by eventName='ConsoleLogin' and eventSource='cloudtrail.amazonaws.com' with error conditions (FailedAuthentication).
 
 ## Architecture
 
@@ -47,18 +72,14 @@ This project implements a complete pipeline for:
 
 ### Components
 
-- **`query_generator.py`**: Core query generation logic using rule-based parsing
-- **`evaluator.py`**: Evaluation framework with precision, recall, F1, and accuracy metrics
-- **`explainability.py`**: Explainability module for hypothesis interpretation and query reasoning
-- **`main.py`**: Entry point that orchestrates the full pipeline
-- **`utils.py`**: Utility functions for loading data and hypotheses
+- **`query_generator.py`**:  query generation logic using rule-based parsing
+- **`evaluator.py`**: evaluation framework with precision, recall, F1, and accuracy metrics
+- **`explainability.py`**: explainability for hypothesis interpretation and query reasoning
+- **`main.py`**: entry point that runs the full pipeline
+- **`utils.py`**: utility functions for loading data and hypotheses
 
 ## Setup Instructions
 
-### Prerequisites
-
-- Python 3.8 or higher
-- pip or conda package manager
 
 ### Installation
 
@@ -93,7 +114,7 @@ This project implements a complete pipeline for:
 2. **View results:**
    - Evaluation results: `reports/evaluation_results.json`
    - Explanations: `reports/explanations.json`
-   - Console output shows summary metrics and per-hypothesis breakdown
+   - Console output will show summary metrics and per-hypothesis breakdown
 
 ### Expected Output
 
@@ -139,25 +160,27 @@ Weighted F1 Score: 0.8012
 
 ## Design Decisions and Trade-offs
 
-### Query Generation Approach
+### Query Generation 
 
 **Decision**: Rule-based parsing with keyword matching
 - **Rationale**: Provides deterministic, explainable results without requiring API keys or external services
 - **Trade-off**: Less flexible than LLM-based approaches, but more reliable and faster
 - **Future improvement**: Can be extended with LLM fallback for complex hypotheses
+- Note: I also didn’t have API tokens available to use an LLM, so rule-based parsing was the practical option
 
 ### Evaluation Metrics
 
 **Decision**: Precision, Recall, F1 Score, and Accuracy
-- **Rationale**: Standard information retrieval metrics that measure both correctness and completeness
-- **Trade-off**: Accuracy is approximate (requires total dataset size), but precision/recall are exact
+- **Rationale**: Standard information metrics that measure correctness. Precision measures correctness (how many retrieved rows are relevant), recall measures completeness (how many relevant rows were retrieved), F1 balances the two, and accuracy gives an overall correctness measure. Results are also compared against expected outcomes for validation.
+- **Trade-off**: Accuracy can be approximate if the total dataset size is unknown, but precision, recall, and F1 are exact.
+- **Future improvement**: Metrics could be extended with weighted scores, or visualizations 
 
 ### Data Structure
 
 **Decision**: Pandas DataFrame operations
 - **Rationale**: Flexible, in-memory operations suitable for the dataset size
 - **Trade-off**: May not scale to very large datasets (>10GB), but works well for this use case
-- **Alternative**: Could use DuckDB or Polars for better performance on larger datasets
+- **Alternative**: Could use DuckDB , SQL, or Polars for better performance on larger datasets
 
 ### Explainability
 
@@ -200,8 +223,8 @@ ai-threat-hunting/
 │   ├── explainability.py               # Explainability module
 │   ├── main.py                         # Entry point
 │   └── utils.py                        # Utility functions
-├── reports/                            # Generated reports (created at runtime)
-│   ├── evaluation_results.json
+├── reports/                            # Generated reports (created at run main.py)
+│   ├── evaluation_results.json         
 │   └── explanations.json
 ├── requirements.txt                    # Python dependencies
 ├── README.md                           # This file
@@ -220,10 +243,9 @@ ai-threat-hunting/
 
 ### Current Limitations
 
-1. **Rule-based parsing**: Limited to predefined patterns, may miss nuanced hypotheses
-2. **Approximate accuracy**: True negatives calculation requires total dataset size
-3. **No query optimization**: Queries are generated but not optimized for performance
-4. **Single-step reasoning**: Complex hypotheses requiring multiple queries are not supported
+1. **Rule-based parsing**: Limited to predefined patterns and keywords, may miss nuanced or ambiguous hypotheses. LLM-based parsing could handle more complex hypotheses, but tokens/API access were not available for this project.
+2. **Approximate accuracy**:True negatives calculation requires knowledge of total dataset size; otherwise, accuracy is only approximate.
+3. **No query optimization**: Queries are generated but not optimized for performance , especially on larger datasets
 
 ### Future Improvements
 
@@ -233,21 +255,3 @@ ai-threat-hunting/
 4. **Interactive Demo**: Create Streamlit web UI for interactive query generation
 5. **Automated Prompt Improvement**: Learn from evaluation failures to improve parsing
 6. **Performance Benchmarks**: Add latency and throughput measurements
-
-## Troubleshooting
-
-### Common Issues
-
-1. **FileNotFoundError**: Ensure all data files are in the `data/` directory
-2. **MemoryError**: The dataset is large (~200K rows). Ensure sufficient RAM (4GB+ recommended)
-3. **ImportError**: Activate virtual environment and ensure all dependencies are installed
-
-### Getting Help
-
-- Check `APPROACH.md` for detailed implementation notes
-- Review evaluation results in `reports/evaluation_results.json` for per-hypothesis metrics
-- Check explanations in `reports/explanations.json` to understand query reasoning
-
-## License
-
-This project is part of an AI Engineer assignment.
