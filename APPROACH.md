@@ -1,20 +1,22 @@
 # Approach Documentation
 
-This document describes the approach, iterations, and improvements made to the AI Threat Hunting Query Generation & Evaluation System.
+
+Note: During development, I accidentally committed large result files (evaluation_results.json), which broke my commit history/logs. To resolve this, I manually uploaded the results to a new GitHub repository and excluded large files from future commits.
+
 
 ## Initial Approach
 
-### Design Philosophy
+### Design 
 
 The system was designed with the following principles:
-1. **Explainability First**: Every query must be explainable with clear reasoning
+1. **Explainability**: Every query must be explainable with clear reasoning
 2. **Deterministic Results**: Queries should produce consistent, reproducible results
 3. **Evaluation-Driven**: Design decisions should be validated through metrics
-4. **Extensibility**: Architecture should support future enhancements (LLM integration, etc.)
+4. **Extendable**: Architecture should support future enhancements (LLM integration, etc.)
 
 ### Initial Architecture
 
-The initial design used a simple rule-based approach:
+The initial design used a rule-based approach:
 - **HypothesisIntent**: Structured data class to represent parsed hypotheses
 - **Rule-based Parsing**: Keyword matching to extract intent
 - **Pandas Query Functions**: Callable functions that filter DataFrames
@@ -25,7 +27,7 @@ The initial design used a simple rule-based approach:
 **Initial Components:**
 1. `HypothesisIntent` dataclass with fields: `event_category`, `success`, `indicators`, `actor`
 2. Simple keyword matching in `parse_hypothesis()`
-3. Basic SQL-like query string generation
+3. Basic query string generation
 4. Minimal evaluation (row count comparison only)
 
 **Baseline Scores (Initial):**
@@ -141,7 +143,6 @@ While queries were working, there was no way to understand:
 - Confidence in query correctness
 
 ### Solution
-
 **Changes Made:**
 1. **Explanation Module**: Created `explainability.py` with:
    - Hypothesis interpretation
@@ -173,8 +174,7 @@ While queries were working, there was no way to understand:
 - Users can understand and validate query logic
 - Confidence scores help identify uncertain queries
 
-## Iteration 5: Robust Error Handling and Data Loading
-
+## Iteration 5: Error Handling and Data Loading
 ### Problem Identified
 
 Large CSV file loading was slow and could fail. No progress indication. Index matching for evaluation was fragile.
